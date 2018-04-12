@@ -76,7 +76,7 @@ def makeraindist(pdata1,pdata2,lat,lon):
         print 'pdata2 should be [days,lat,lon]'
     pmax=np.array([pdata1.max(),pdata2.max()]).max()/wm2tommd
     maxp=1500;# % choose an arbitrary upper bound for initial distribution, in w/m2
-    minp=1;# % arbitrary lower bound, in w/m2
+    minp=1;# % arbitrary lower bound, in w/m2. Make sure to set this low enough that you catch most of the rain. 
     #%%% thoughts: it might be better to specify the minimum threshold and the                                     
     #%%% bin spacing, which I have around 7%. The goals are to capture as much                                     
     #%%% of the distribution as possible and to balance sampling against                                           
@@ -118,51 +118,56 @@ def makeraindist(pdata1,pdata2,lat,lon):
     pamt2=np.nansum(np.nansum(pamtmap2*weightp,axis=0),axis=0)
     return ppdf1,pamt1,ppdf2,pamt2,bincrates
 
-#makeshiftincplots(ppdf1,pamt1,ppdf2,pamt2,dt,bincrates);
-def makedistplots(ppdf1,pamt1,ppdf2,pamt2,dt,bincrates):
-    #### This is how we'll normalize to get changes per degree warming. 
-    pamt21k=pamt1+(pamt2-pamt1)/dt;
-    ppdf21k=ppdf1+(ppdf2-ppdf1)/dt;
-    ddry=((ppdf21k[0]-ppdf1[0])*100) # Change in dry days
-    # % rain rates in mm/d for x axis ticks and labeling 
-    otn=np.linspace(1,9,9)
-    xtickrates=np.append(0,otn*.1)
-    xtickrates=np.append(xtickrates,otn)
-    xtickrates=np.append(xtickrates,otn*10)
-    xtickrates=np.append(xtickrates,otn*100)
-    xticks=np.interp(xtickrates,bincrates,range(0,len(bincrates))); #% bin numbers associated with nice number rain rate
-    xticks,indices=np.unique(xticks,return_index=True)
-    xtickrates=xtickrates[indices]
-    ### Bin width - needed to normalize the rain amount distribution
-    db=(bincrates[2]-bincrates[1])/bincrates[1];
-    ### Now we plot
-    plt.figure(figsize=(4,6))
-    plt.clf()
-    ax=plt.subplot(211)
-    plt.plot(range(0,len(pamt1)),(pamt21k-pamt1)/db, 'k')
-    plt.plot((0,len(pamt1)),(0,0),'0.5')
-    plt.ylim((-.05,.15))
-    plt.xlim((4,130))
-    #plt.setp(ax,xticks=xticks,xticklabels=['0','0.1','','','','','','','','','','1','','','','','','','','','10','','','','','','','','','100','','','','','','','','','1000'])
-    plt.setp(ax,xticks=xticks,xticklabels=[''])
-    #plt.xlabel('Rain rate (mm/d)')
-    plt.title('Rain amount change (mm/d/K)')
-    ax=plt.subplot(212)
-    plt.plot(range(0,len(ppdf1)),(ppdf21k-ppdf1)*100, 'k')
-    plt.plot((0,len(ppdf1)),(0,0),'0.5')
-    plt.ylim((-.06,.1))
-    plt.xlim((4,130))
-    ### Annotate with the dry day frequency
-    t=plt.text(4,.095, "{:.1f}".format(ddry)+'%')
-    plt.setp(t,va='top',ha='left')
-    plt.setp(ax,xticks=xticks,xticklabels=['0','0.1','','','','','','','','','','1','','','','','','','','','10','','','','','','','','','100','','','','','','','','','1000'])
-    plt.xlabel('Rain rate (mm/d)')
-    plt.title('Rain frequency change (%/K)')
-    plt.savefig("raindistdemo.pdf")
-    return
 
 ### Call the function to make the rain distribution
 ppdf1, pamt1, ppdf2, pamt2, bincrates = makeraindist(pdata1,pdata2,lat,lon)
 
 ### Plot the change in rain amount and rain frequency distributions 
-makedistplots(ppdf1,pamt1,ppdf2,pamt2,dt,bincrates)
+## you could turn this into a function if you wanted
+#makedistplots(ppdf1,pamt1,ppdf2,pamt2,dt,bincrates)
+#def makedistplots(ppdf1,pamt1,ppdf2,pamt2,dt,bincrates):
+
+#### This is how we'll normalize to get changes per degree warming. 
+pamt21k=pamt1+(pamt2-pamt1)/dt;
+ppdf21k=ppdf1+(ppdf2-ppdf1)/dt;
+ddry=((ppdf21k[0]-ppdf1[0])*100) # Change in dry days
+    # % rain rates in mm/d for x axis ticks and labeling 
+otn=np.linspace(1,9,9)
+xtickrates=np.append(0,otn*.1)
+xtickrates=np.append(xtickrates,otn)
+xtickrates=np.append(xtickrates,otn*10)
+xtickrates=np.append(xtickrates,otn*100)
+xticks=np.interp(xtickrates,bincrates,range(0,len(bincrates))); #% bin numbers associated with nice number rain rate
+xticks,indices=np.unique(xticks,return_index=True)
+xtickrates=xtickrates[indices]
+    ### Bin width - needed to normalize the rain amount distribution
+db=(bincrates[2]-bincrates[1])/bincrates[1];
+    ### Now we plot
+plt.figure(figsize=(4,6))
+plt.clf()
+ax=plt.subplot(211)
+plt.plot(range(0,len(pamt1)),(pamt21k-pamt1)/db, 'k')
+plt.plot((0,len(pamt1)),(0,0),'0.5')
+plt.ylim((-.05,.15))
+plt.xlim((4,130))
+    #plt.setp(ax,xticks=xticks,xticklabels=['0','0.1','','','','','','','','','','1','','','','','','','','','10','','','','','','','','','100','','','','','','','','','1000'])
+plt.setp(ax,xticks=xticks,xticklabels=[''])
+    #plt.xlabel('Rain rate (mm/d)')
+plt.title('Rain amount change (mm/d/K)')
+ax=plt.subplot(212)
+plt.plot(range(0,len(ppdf1)),(ppdf21k-ppdf1)*100/db, 'k')
+plt.plot((0,len(ppdf1)),(0,0),'0.5')
+plt.ylim((-.06/db,.1/db))
+plt.xlim((4,130))
+    ### Annotate with the dry day frequency
+t=plt.text(4,.095/db, "{:.1f}".format(ddry)+'%')
+plt.setp(t,va='top',ha='left')
+plt.setp(ax,xticks=xticks,xticklabels=['0','0.1','','','','','','','','','','1','','','','','','','','','10','','','','','','','','','100','','','','','','','','','1000'])
+plt.xlabel('Rain rate (mm/d)')
+plt.title('Rain frequency change (%/K)')
+#plt.show()
+filename="raindistdemo.pdf"
+plt.savefig(filename)
+print "wrote "+filename
+plt.close()
+#    return
