@@ -54,7 +54,7 @@ def makedists(pdata,binl):
             thisn,thisbin=np.histogram(pdata[ilon,ilat,:],bins) 
             n[ilon,ilat,:]=thisn
             # these are the bin locations. we'll use these for the amount dist
-            binno[ilon,ilat,:]=np.digitize(pdata[ilon,ilat,:],bins) 
+            binno[ilon,ilat,:]=np.digitize(pdata[ilon,ilat,:],bins) - 1
     #### Calculate the number of days with non-missing data, for normalization
     ndmat=np.tile(np.expand_dims(np.nansum(n,axis=2),axis=2),(1,1,len(bins)-1))
     thisppdfmap=n/ndmat
